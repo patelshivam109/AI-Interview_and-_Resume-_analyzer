@@ -1,22 +1,28 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import { InterviewProvider } from "./context/InterviewContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import Interview from "./pages/Interview";
+import Landing from "./pages/Landing";
 import Result from "./pages/Result";
 import Upload from "./pages/Upload";
 
 function AppShell() {
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-white/70 to-transparent" />
-      <div className="pointer-events-none absolute left-[-120px] top-24 h-72 w-72 rounded-full bg-accent-100/60 blur-3xl" />
-      <div className="pointer-events-none absolute right-[-140px] top-10 h-80 w-80 rounded-full bg-slate-200/80 blur-3xl" />
+    <div className="app-shell">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="bg-grid absolute inset-0 opacity-60" />
+        <div className="absolute left-[-120px] top-16 h-72 w-72 rounded-full bg-accent-100/60 blur-3xl dark:bg-accent-500/15" />
+        <div className="absolute right-[-140px] top-0 h-80 w-80 rounded-full bg-slate-300/70 blur-3xl dark:bg-sky-400/10" />
+        <div className="absolute bottom-[-120px] left-1/3 h-72 w-72 rounded-full bg-cyan-100/70 blur-3xl dark:bg-accent-400/10" />
+      </div>
 
       <Navbar />
 
-      <main className="relative mx-auto flex min-h-[calc(100vh-88px)] w-full max-w-7xl px-4 pb-10 pt-4 sm:px-6 lg:px-8">
+      <main className="page-shell">
         <Routes>
-          <Route path="/" element={<Upload />} />
+          <Route path="/" element={<Landing />} />
+          <Route path="/upload" element={<Upload />} />
           <Route path="/interview" element={<Interview />} />
           <Route path="/result" element={<Result />} />
         </Routes>
@@ -28,9 +34,11 @@ function AppShell() {
 export default function App() {
   return (
     <BrowserRouter>
-      <InterviewProvider>
-        <AppShell />
-      </InterviewProvider>
+      <ThemeProvider>
+        <InterviewProvider>
+          <AppShell />
+        </InterviewProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

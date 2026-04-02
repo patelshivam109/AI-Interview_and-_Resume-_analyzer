@@ -1,6 +1,12 @@
-import { useEffect, useState } from "react";
+import { Mic, SendHorizontal, Sparkles, WandSparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AnswerBox from "../components/AnswerBox";
+import Badge from "../components/Badge";
+import Button from "../components/Button";
+import Card from "../components/Card";
+import Loader from "../components/Loader";
+import ProgressBar from "../components/ProgressBar";
 import QuestionCard from "../components/QuestionCard";
 import ScoreCard from "../components/ScoreCard";
 import { useInterview } from "../context/InterviewContext";
@@ -21,6 +27,7 @@ export default function Interview() {
   const [answer, setAnswer] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [error, setError] = useState("");
+  const [voiceNotice, setVoiceNotice] = useState("");
 
   const questionIndex = Math.min(
     state.currentQuestionIndex,
@@ -29,6 +36,7 @@ export default function Interview() {
   const currentQuestion = state.questions[questionIndex];
   const currentFeedback = state.feedback[questionIndex];
   const hasSubmitted = Boolean(currentFeedback);
+  const completionPercent = totalQuestions ? Math.round((answeredCount / totalQuestions) * 100) : 0;
 
   useEffect(() => {
     if (!hasActiveSession) {
@@ -42,23 +50,38 @@ export default function Interview() {
 
     setAnswer(state.answers[questionIndex] ?? "");
     setError("");
+    setVoiceNotice("");
   }, [hasActiveSession, isComplete, navigate, questionIndex, state.answers]);
+
+  const qualitySummary = useMemo(() => {
+    if (!currentFeedback) {
+      return "Submit your response to see a live evaluation snapshot.";
+    }
+
+    if (currentFeedback.score >= 80) {
+      return "This answer is landing strongly and reads as well structured.";
+    }
+
+    if (currentFeedback.score >= 65) {
+      return "There is a solid foundation here with room to tighten precision.";
+    }
+
+    return "The answer has promise, but it would benefit from more structure and depth.";
+  }, [currentFeedback]);
 
   if (!hasActiveSession) {
     return (
-      <div className="mx-auto flex w-full max-w-3xl items-center justify-center py-10">
-        <div className="soft-card w-full px-8 py-12 text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">
-            No Active Session
-          </p>
+      <div className="mx-auto flex w-full max-w-3xl items-center justify-center py-12">
+        <Card className="w-full px-8 py-12 text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-faint">No active session</p>
           <h1 className="mt-4 text-3xl font-semibold">Start with a resume upload first</h1>
-          <p className="mt-4 text-base leading-7 text-slate-500">
+          <p className="mt-4 text-base leading-7 text-muted">
             We need your resume to generate tailored interview questions.
           </p>
-          <Link to="/" className="button-primary mt-8">
+          <Button as={Link} to="/upload" className="mt-8">
             Go to Upload
-          </Link>
-        </div>
+          </Button>
+        </Card>
       </div>
     );
   }
@@ -86,12 +109,12 @@ export default function Interview() {
     } catch (requestError) {
       const timeoutMessage =
         requestError.code === "ECONNABORTED"
-          ? "The first evaluation can take a little longer while the AI model loads. Please retry in a few seconds."
+          ? "The first evaluation can take a little longer while the model loads. Please retry in a few seconds."
           : null;
 
       setError(
         timeoutMessage ||
-        requestError.response?.data?.detail ||
+          requestError.response?.data?.detail ||
           requestError.message ||
           "Evaluation failed. Please confirm the backend is available.",
       );
@@ -112,13 +135,12 @@ export default function Interview() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  const qualitySummary =
-    currentFeedback?.score >= 80
-      ? "This answer is landing strongly."
-      : "There’s a good base here, but the answer can still be sharpened.";
+  function handleVoiceClick() {
+    setVoiceNotice("Voice capture UI is ready, but browser recording is not connected yet.");
+  }
 
   return (
-    <div className="grid w-full gap-6 lg:grid-cols-[1.35fr_0.65fr]">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_380px]">
       <div className="space-y-6">
         <QuestionCard
           question={currentQuestion}
@@ -126,179 +148,206 @@ export default function Interview() {
           totalQuestions={totalQuestions}
         />
 
-        <AnswerBox
-          value={answer}
-          onChange={setAnswer}
-          disabled={isEvaluating || hasSubmitted}
-          placeholder="Frame your answer like a polished interview response. Lead with the core idea, then add supporting detail or an example."
-        />
+        <Card className="p-6 sm:p-7">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-faint">Answer composer</p>
+              <h2 className="mt-2 text-2xl font-semibold">Draft a clear, confident response</h2>
+            </div>
+            <Badge variant="neutral">
+              <Mic size={12} />
+              Question {questionIndex + 1}/{totalQuestions}
+            </Badge>
+          </div>
 
-        {error && (
-          <div className="rounded-2xl bg-rose-50 px-4 py-4 text-sm text-rose-700 ring-1 ring-rose-100">
-            <p>{error}</p>
-            <button
+          <AnswerBox
+            value={answer}
+            onChange={setAnswer}
+            disabled={isEvaluating || hasSubmitted}
+            onVoiceClick={handleVoiceClick}
+            voiceLabel="Voice Input"
+            placeholder="Lead with your answer, then support it with specifics. Mention tradeoffs, a concrete example, or the outcome of your approach."
+          />
+
+          {voiceNotice ? (
+            <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700 dark:border-sky-400/20 dark:bg-sky-500/10 dark:text-sky-200">
+              {voiceNotice}
+            </div>
+          ) : null}
+
+          {error ? (
+            <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-700 dark:border-rose-400/20 dark:bg-rose-500/10 dark:text-rose-200">
+              {error}
+            </div>
+          ) : null}
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <Button
               type="button"
               onClick={handleSubmitAnswer}
-              disabled={isEvaluating}
-              className="mt-3 font-semibold text-rose-700 underline decoration-rose-300 underline-offset-4"
+              disabled={isEvaluating || hasSubmitted}
+              className="min-w-[180px]"
             >
-              Retry evaluation
-            </button>
+              {isEvaluating ? (
+                <Loader label="Evaluating answer" />
+              ) : hasSubmitted ? (
+                <>
+                  <Sparkles size={16} />
+                  Answer Submitted
+                </>
+              ) : (
+                <>
+                  <SendHorizontal size={16} />
+                  Submit Answer
+                </>
+              )}
+            </Button>
+
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleNextQuestion}
+              disabled={!hasSubmitted}
+              className="min-w-[180px]"
+            >
+              {questionIndex === totalQuestions - 1 ? "View Results" : "Next Question"}
+            </Button>
           </div>
-        )}
+        </Card>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <button
-            type="button"
-            onClick={handleSubmitAnswer}
-            disabled={isEvaluating || hasSubmitted}
-            className="button-primary min-w-[180px]"
-          >
-            {isEvaluating ? (
-              <span className="inline-flex items-center gap-2">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                Evaluating...
+        <Card className="p-6 sm:p-7">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <span className="eyebrow">
+                <WandSparkles size={12} />
+                Live evaluation panel
               </span>
-            ) : hasSubmitted ? (
-              "Answer Submitted"
-            ) : (
-              "Submit Answer"
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleNextQuestion}
-            disabled={!hasSubmitted}
-            className={`button-secondary min-w-[180px] ${
-              !hasSubmitted ? "cursor-not-allowed opacity-50" : ""
-            }`}
-          >
-            {questionIndex === totalQuestions - 1 ? "View Results" : "Next Question"}
-          </button>
-        </div>
-
-        {currentFeedback && (
-          <section className="soft-card animate-fade-up p-6 sm:p-7">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  Live Feedback
-                </span>
-                <h2 className="mt-3 text-2xl font-semibold">Evaluation snapshot</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-500">{qualitySummary}</p>
-              </div>
-              <div className="rounded-3xl bg-slate-950 px-5 py-4 text-white shadow-float">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">
-                  Overall
-                </p>
-                <p className="mt-2 text-3xl font-bold">{currentFeedback.score}</p>
-              </div>
+              <h2 className="mt-4 text-2xl font-semibold">Feedback after each answer</h2>
+              <p className="mt-2 text-sm leading-7 text-muted">{qualitySummary}</p>
             </div>
-
-            <p className="mt-6 rounded-3xl bg-slate-50 px-5 py-4 text-sm leading-7 text-slate-600">
-              {currentFeedback.feedback}
-            </p>
-
-            <div className="mt-6 flex flex-wrap gap-2">
-              {currentFeedback.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-accent-50 px-3 py-1 text-xs font-semibold text-accent-700"
-                >
-                  {humanizeTag(tag)}
-                </span>
-              ))}
+            <div className="rounded-[26px] bg-slate-950 px-5 py-4 text-white shadow-float dark:bg-accent-500/15 dark:text-accent-50">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70 dark:text-accent-100/70">
+                Overall
+              </p>
+              <p className="mt-2 text-3xl font-semibold">{currentFeedback?.score ?? "--"}</p>
             </div>
+          </div>
 
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              <ScoreCard
-                label="Semantic Match"
-                value={currentFeedback.breakdown.semantic_score}
-                hint="How well your response aligns with the prompt."
-                tone="blue"
-              />
-              <ScoreCard
-                label="Confidence"
-                value={currentFeedback.breakdown.confidence_score}
-                hint={`Tone detected as ${currentFeedback.breakdown.sentiment_label.toLowerCase()}.`}
-                tone="emerald"
-              />
-              <ScoreCard
-                label="Filler Words"
-                value={currentFeedback.breakdown.filler_count}
-                hint={`Penalty applied: ${currentFeedback.breakdown.filler_penalty}.`}
-                tone="amber"
-              />
-            </div>
+          {currentFeedback ? (
+            <>
+              <p className="mt-6 rounded-[24px] border border-slate-200/80 bg-white/80 px-5 py-4 text-sm leading-7 text-muted dark:border-slate-800 dark:bg-slate-950/55">
+                {currentFeedback.feedback}
+              </p>
 
-            <div className="mt-6 rounded-3xl bg-slate-50 px-5 py-5">
-              <p className="text-sm font-semibold text-ink">Suggestions</p>
-              <ul className="mt-3 space-y-3 text-sm leading-6 text-slate-600">
-                {currentFeedback.suggestions.map((suggestion) => (
-                  <li
-                    key={suggestion}
-                    className="rounded-2xl bg-white px-4 py-3 ring-1 ring-slate-200/70"
-                  >
-                    {suggestion}
-                  </li>
+              <div className="mt-6 flex flex-wrap gap-2">
+                {currentFeedback.tags.map((tag) => (
+                  <Badge key={tag} variant="accent">
+                    {humanizeTag(tag)}
+                  </Badge>
                 ))}
-              </ul>
+              </div>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-3">
+                <ScoreCard
+                  label="Technical Score"
+                  value={currentFeedback.breakdown.semantic_score}
+                  hint="How closely your answer matches the prompt."
+                  tone="blue"
+                />
+                <ScoreCard
+                  label="Confidence Score"
+                  value={currentFeedback.breakdown.confidence_score}
+                  hint={`Detected tone: ${currentFeedback.breakdown.sentiment_label.toLowerCase()}.`}
+                  tone="emerald"
+                />
+                <ScoreCard
+                  label="Filler Words"
+                  value={currentFeedback.breakdown.filler_count}
+                  hint={`Penalty applied: ${currentFeedback.breakdown.filler_penalty}.`}
+                  tone="amber"
+                  suffix="count"
+                />
+              </div>
+
+              <div className="mt-6 rounded-[24px] border border-slate-200/80 bg-white/80 px-5 py-5 dark:border-slate-800 dark:bg-slate-950/55">
+                <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                  Suggestions
+                </p>
+                <div className="mt-4 space-y-3">
+                  {currentFeedback.suggestions.map((suggestion) => (
+                    <div
+                      key={suggestion}
+                      className="rounded-2xl border border-slate-200/80 bg-white px-4 py-3 text-sm leading-6 text-muted dark:border-slate-800 dark:bg-slate-900/70"
+                    >
+                      {suggestion}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="mt-6 rounded-[24px] border border-dashed border-slate-300 px-5 py-8 text-sm text-faint dark:border-slate-700">
+              Submit your answer to unlock technical scoring, confidence analysis, and tailored suggestions.
             </div>
-          </section>
-        )}
+          )}
+        </Card>
       </div>
 
       <aside className="space-y-6">
-        <div className="soft-card p-6">
-          <p className="text-sm font-semibold text-slate-400">Session</p>
+        <Card className="p-6">
+          <p className="text-sm font-semibold text-faint">Session progress</p>
+          <h2 className="mt-2 text-2xl font-semibold">Stay on track</h2>
+
+          <div className="mt-6 space-y-5">
+            <ProgressBar
+              value={completionPercent}
+              label="Interview completion"
+              hint={`${answeredCount} of ${totalQuestions} questions evaluated`}
+            />
+            <ProgressBar
+              value={questionIndex + 1}
+              max={Math.max(totalQuestions, 1)}
+              label="Current position"
+              hint="Moves forward after each submitted answer"
+              colorClass="from-sky-400 to-cyan-500"
+            />
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <p className="text-sm font-semibold text-faint">Session details</p>
           <div className="mt-4 space-y-4">
             <div>
-              <p className="text-sm text-slate-500">Resume</p>
-              <p className="mt-1 text-sm font-semibold text-ink">{state.fileName}</p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">Answered so far</p>
-              <p className="mt-1 text-2xl font-semibold text-ink">
-                {answeredCount} <span className="text-base text-slate-400">/ {totalQuestions}</span>
+              <p className="text-sm text-faint">Resume</p>
+              <p className="mt-1 text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                {state.fileName}
               </p>
             </div>
             <div>
-              <p className="text-sm text-slate-500">Detected skills</p>
+              <p className="text-sm text-faint">Detected skills</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {state.extractedSkills.length ? (
                   state.extractedSkills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="rounded-full bg-accent-50 px-3 py-1 text-xs font-semibold text-accent-700"
-                    >
+                    <Badge key={skill} variant="accent">
                       {skill}
-                    </span>
+                    </Badge>
                   ))
                 ) : (
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">
-                    No skills extracted
-                  </span>
+                  <Badge variant="neutral">No extracted skills</Badge>
                 )}
               </div>
             </div>
           </div>
-        </div>
+        </Card>
 
-        <div className="soft-card p-6">
-          <p className="text-sm font-semibold text-slate-400">Answer Tips</p>
-          <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
-            <p className="rounded-2xl bg-slate-50 px-4 py-3">
-              Start with a direct answer, then expand into the reasoning.
-            </p>
-            <p className="rounded-2xl bg-slate-50 px-4 py-3">
-              Use one concrete example to make abstract claims believable.
-            </p>
-            <p className="rounded-2xl bg-slate-50 px-4 py-3">
-              If you need time to think, pause instead of filling the silence.
-            </p>
+        <Card className="p-6">
+          <p className="text-sm font-semibold text-faint">Interview advice</p>
+          <div className="mt-4 space-y-3 text-sm leading-7 text-muted">
+            <div className="muted-card px-4 py-3">Start with the direct answer before expanding.</div>
+            <div className="muted-card px-4 py-3">Use one concrete example to make your reasoning credible.</div>
+            <div className="muted-card px-4 py-3">If you need time to think, pause instead of filling silence.</div>
           </div>
-        </div>
+        </Card>
       </aside>
     </div>
   );

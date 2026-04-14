@@ -5,7 +5,7 @@ import AnswerBox from "../components/AnswerBox";
 import Badge from "../components/Badge";
 import Button from "../components/Button";
 import Card from "../components/Card";
-import Loader from "../components/Loader";
+import Preloader from "../components/Preloader";
 import ProgressBar from "../components/ProgressBar";
 import QuestionCard from "../components/QuestionCard";
 import ScoreCard from "../components/ScoreCard";
@@ -141,6 +141,17 @@ export default function Interview() {
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_380px]">
+      <Preloader
+        open={isEvaluating}
+        title="Evaluating your response"
+        detail="Scoring clarity, confidence, and technical depth before the next question appears."
+        messages={[
+          "Scoring the answer structure...",
+          "Checking confidence and clarity...",
+          "Drafting feedback and next steps...",
+        ]}
+      />
+
       <div className="space-y-6">
         <QuestionCard
           question={currentQuestion}
@@ -188,9 +199,7 @@ export default function Interview() {
               disabled={isEvaluating || hasSubmitted}
               className="min-w-[180px]"
             >
-              {isEvaluating ? (
-                <Loader label="Evaluating answer" />
-              ) : hasSubmitted ? (
+              {hasSubmitted ? (
                 <>
                   <Sparkles size={16} />
                   Answer Submitted
@@ -198,7 +207,7 @@ export default function Interview() {
               ) : (
                 <>
                   <SendHorizontal size={16} />
-                  Submit Answer
+                  {isEvaluating ? "Evaluating Answer" : "Submit Answer"}
                 </>
               )}
             </Button>

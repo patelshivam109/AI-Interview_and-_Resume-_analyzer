@@ -12,7 +12,7 @@ import { useNavigate } from "react-router-dom";
 import Badge from "../components/Badge";
 import Button from "../components/Button";
 import Card from "../components/Card";
-import Loader from "../components/Loader";
+import Preloader from "../components/Preloader";
 import { useInterview } from "../context/InterviewContext";
 import { uploadResume } from "../services/api";
 
@@ -110,6 +110,17 @@ export default function Upload() {
 
   return (
     <div className="space-y-8">
+      <Preloader
+        open={isUploading}
+        title="Analyzing your resume"
+        detail="Extracting skills, building question paths, and shaping the interview session."
+        messages={[
+          "Reading the resume structure...",
+          "Extracting skills and experience...",
+          "Generating tailored interview questions...",
+        ]}
+      />
+
       <section className="glass-panel overflow-hidden px-6 py-8 sm:px-8 sm:py-10 lg:px-10">
         <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
           <div className="max-w-2xl">
@@ -203,14 +214,8 @@ export default function Upload() {
                 disabled={!selectedFile || isUploading}
                 className="min-w-[190px]"
               >
-                {isUploading ? (
-                  <Loader label="Analyzing resume" />
-                ) : (
-                  <>
-                    <ScanSearch size={16} />
-                    Analyze Resume
-                  </>
-                )}
+                <ScanSearch size={16} />
+                {isUploading ? "Analyzing Resume" : "Analyze Resume"}
               </Button>
 
               <Button

@@ -29,7 +29,7 @@ export default function Navbar() {
         <div className="glass-panel flex items-center justify-between gap-4 px-4 py-4 sm:px-5">
           <div className="min-w-0">
             <NavLink to="/" className="inline-flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-accent-500 to-slate-900 text-white shadow-float">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-accent-500 via-orange-700 to-emerald-700 text-white shadow-float">
                 <Bot size={18} />
               </div>
               <div className="min-w-0">
@@ -37,13 +37,13 @@ export default function Navbar() {
                   AI Interview Simulator
                 </p>
                 <p className="truncate text-xs text-faint">
-                  Interview prep that feels like a polished SaaS product
+                  Structured practice with crafted feedback loops
                 </p>
               </div>
             </NavLink>
           </div>
 
-          <nav className="hidden items-center gap-1 rounded-full border border-slate-200/80 bg-white/60 p-1 dark:border-slate-700 dark:bg-slate-900/50 md:flex">
+          <nav className="hidden items-center gap-1 rounded-full border border-slate-300/70 bg-white/55 p-1 dark:border-slate-600/80 dark:bg-slate-900/50 md:flex">
             {navItems.map((item) => {
               const active = location.pathname === item.to;
 

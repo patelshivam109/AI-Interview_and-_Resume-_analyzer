@@ -5,20 +5,20 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Manrope"', "ui-sans-serif", "system-ui", "sans-serif"],
-        display: ['"Sora"', '"Manrope"', "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ['"Space Grotesk"', "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ['"Space Grotesk"', '"IBM Plex Mono"', "ui-sans-serif", "system-ui", "sans-serif"],
       },
       colors: {
         ink: "#0f172a",
         mist: "#f5f7fb",
         accent: {
-          50: "#eff5ff",
-          100: "#dfeaff",
-          200: "#c2d4ff",
-          400: "#6d8dff",
-          500: "#4f6ef7",
-          600: "#3852cf",
-          700: "#2d419f",
+          50: "#fff0e8",
+          100: "#ffd9c6",
+          200: "#fcb896",
+          400: "#eb885d",
+          500: "#d15d32",
+          600: "#ab4520",
+          700: "#843418",
         },
       },
       boxShadow: {

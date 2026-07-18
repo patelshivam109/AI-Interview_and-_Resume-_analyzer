@@ -13,7 +13,8 @@ backend/venv/
 # Environment variables
 .env
 .env.*
-.env.example
+!.env.example
+!.env.sample
 
 # Logs
 *.log

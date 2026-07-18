@@ -1,4 +1,4 @@
-# AI Interview Simulator
+## AI Interview Simulator
 
 A portfolio-grade AI interview practice platform built with FastAPI, React, and Tailwind CSS.
 
